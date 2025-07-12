@@ -128,13 +128,66 @@ Key project parameters include:
 
 ```mermaid
 graph TD
-    A[CSV Sources] --> B[SSIS Package]
-    B --> C[Data Transformation]
-    C --> D[SQL Server Database]
-    D --> E[Analytics & Reporting]
+    A[📄 CSV Sources] --> B[🔄 SSIS Package]
+    B --> C[⚙️ Data Transformation]
+    C --> D[🗄️ SQL Server Database]
+    D --> E[📊 Analytics & Reporting]
+    
+    A1[Discount_Prods.csv] --> B
+    A2[Sales_06-10_2020.csv] --> B
+    A3[Products_Categories.csv] --> B
+    A4[Geolocation_shops.csv] --> B
+    A5[DateDetails.csv] --> B
 ```
 
-## 📈 Business Intelligence
+## 🏗️ Architecture
+
+### Data Architecture Overview
+
+```mermaid
+graph LR
+    subgraph "📁 Data Sources"
+        CSV1[Sales Data 📊]
+        CSV2[Product Data 🛍️]
+        CSV3[Location Data 🌍]
+        CSV4[Discount Data 💰]
+        CSV5[Date Data 📅]
+    end
+    
+    subgraph "🔄 ETL Layer"
+        SSIS[SSIS Package]
+        CM[Connection Managers]
+        DT[Data Transformations]
+    end
+    
+    subgraph "🗄️ Storage Layer"
+        DB[(SQL Server 2022)]
+        TDB[(tempdb)]
+    end
+    
+    subgraph "📊 Analytics Layer"
+        BI[Business Intelligence]
+        REP[Reports]
+        DASH[Dashboards]
+    end
+    
+    CSV1 --> SSIS
+    CSV2 --> SSIS
+    CSV3 --> SSIS
+    CSV4 --> SSIS
+    CSV5 --> SSIS
+    
+    SSIS --> CM
+    CM --> DT
+    DT --> DB
+    DB --> TDB
+    
+    DB --> BI
+    BI --> REP
+    BI --> DASH
+```
+
+## 📊 Business Intelligence
 
 This project enables various analytics scenarios:
 
@@ -142,6 +195,42 @@ This project enables various analytics scenarios:
 - **Product Analytics** - Category performance and discount impact
 - **Geographical Analysis** - Shop location insights
 - **Time-based Reporting** - Date dimension analytics
+
+### Sample Analytics Queries
+
+```sql
+-- Monthly Sales Performance
+SELECT 
+    YEAR(sales_date) as Year,
+    MONTH(sales_date) as Month,
+    SUM(sales_amount) as Total_Sales,
+    COUNT(DISTINCT product_id) as Products_Sold
+FROM sales_data 
+GROUP BY YEAR(sales_date), MONTH(sales_date)
+ORDER BY Year, Month;
+
+-- Top Performing Product Categories
+SELECT 
+    pc.category_name,
+    SUM(s.sales_amount) as Total_Revenue,
+    AVG(d.discount_percentage) as Avg_Discount
+FROM sales_data s
+JOIN product_categories pc ON s.product_id = pc.product_id
+LEFT JOIN discounts d ON s.discount_id = d.discount_id
+GROUP BY pc.category_name
+ORDER BY Total_Revenue DESC;
+
+-- Geographical Sales Distribution
+SELECT 
+    gs.shop_location,
+    gs.latitude,
+    gs.longitude,
+    SUM(s.sales_amount) as Location_Revenue
+FROM sales_data s
+JOIN geolocation_shops gs ON s.shop_id = gs.shop_id
+GROUP BY gs.shop_location, gs.latitude, gs.longitude
+ORDER BY Location_Revenue DESC;
+```
 
 ## 🛠️ Technical Details
 
@@ -155,10 +244,21 @@ This project enables various analytics scenarios:
 
 ### Performance Considerations
 
-- Optimized for batch processing
-- Supports incremental data loads
-- Includes error handling and logging
-- Configurable for different environments
+- ✅ Optimized for batch processing
+- ✅ Supports incremental data loads
+- ✅ Includes comprehensive error handling
+- ✅ Configurable for different environments
+- ✅ Memory-efficient data transformations
+- ✅ Parallel execution capabilities
+
+### Monitoring & Logging
+
+The project includes built-in monitoring features:
+
+- **📊 SSIS Execution Reports** - Detailed package execution statistics
+- **🔍 Error Logging** - Comprehensive error capture and reporting
+- **⏱️ Performance Metrics** - Execution time and throughput monitoring
+- **📈 Data Quality Checks** - Validation and data integrity reporting
 
 ## 📝 Development
 
@@ -172,30 +272,104 @@ This project enables various analytics scenarios:
 
 ### Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+We welcome contributions! Please follow these steps:
+
+1. 🍴 **Fork the repository**
+2. 🌿 **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. ✨ **Make your changes**
+4. 🧪 **Test thoroughly** 
+   - Test SSIS package execution
+   - Validate data transformations
+   - Check error handling
+5. 📝 **Commit your changes**
+   ```bash
+   git commit -m 'Add amazing feature'
+   ```
+6. 🚀 **Push to the branch**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+7. 🔄 **Open a Pull Request**
+
+### Code Style Guidelines
+
+- Follow Microsoft SSIS best practices
+- Use descriptive naming conventions
+- Include proper error handling
+- Document complex transformations
+- Test with sample data
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-**Connection Problems**
-- Verify SQL Server is running
-- Check connection strings
-- Ensure proper permissions
+**🔌 Connection Problems**
+- ✅ Verify SQL Server is running
+- ✅ Check connection strings in SSIS package
+- ✅ Ensure proper authentication permissions
+- ✅ Test database connectivity
 
-**File Access Issues**
-- Verify CSV file paths
-- Check file permissions
-- Ensure proper encoding
+**📁 File Access Issues**
+- ✅ Verify CSV file paths are correct
+- ✅ Check file read permissions
+- ✅ Ensure proper encoding (CP1251)
+- ✅ Validate file formats and delimiters
 
-**Package Execution Errors**
-- Review SSIS logs
-- Check data quality
-- Validate transformations
+**⚙️ Package Execution Errors**
+- ✅ Review SSIS execution logs
+- ✅ Check data quality and consistency
+- ✅ Validate transformation logic
+- ✅ Verify target table schemas
+
+**🌐 Character Encoding Issues**
+- ✅ Ensure CSV files are encoded in CP1251 (Cyrillic)
+- ✅ Check SSIS code page settings
+- ✅ Validate locale settings (Russian - 1049)
+
+## ❓ FAQ
+
+<details>
+<summary><strong>How do I change the target database?</strong></summary>
+
+Update the connection manager settings in the SSIS package:
+1. Open Package.dtsx in Visual Studio
+2. Right-click the connection manager
+3. Select "Edit Connection Manager"
+4. Update server name and database settings
+</details>
+
+<details>
+<summary><strong>Can I add more data sources?</strong></summary>
+
+Yes! To add new CSV sources:
+1. Add a new Flat File Connection Manager
+2. Configure the file format and columns
+3. Add corresponding data flow components
+4. Map to target tables
+</details>
+
+<details>
+<summary><strong>How do I schedule automatic execution?</strong></summary>
+
+Deploy the package to SSIS Catalog and use SQL Server Agent:
+1. Deploy project to SSIS Catalog
+2. Create SQL Server Agent Job
+3. Add SSIS Package Execution step
+4. Configure schedule and notifications
+</details>
+
+<details>
+<summary><strong>What about data validation?</strong></summary>
+
+The package includes:
+- Data type validation
+- Null value handling
+- Error row redirection
+- Execution logging
+</details>
 
 ## 📄 License
 
